@@ -45,7 +45,20 @@ namespace FlashcardsProgram
         {
             return (currentCardStack.Count / 2);
         }
+    private void YRoutine()
+    {
+        correctRoutine();
+        buttonstuff = false;
+        nextQuestion();
+    }
 
+    private void NRoutine()
+    {
+        speechGenerator.Speak("Incorrect.", SpeechVoiceSpeakFlags.SVSFlagsAsync);
+        currentCardStack[quizCardStack[currentIndex].index].score -= 1;
+        buttonstuff = false;
+        nextQuestion();
+    }
     private void initialise()
         {
             
@@ -168,23 +181,19 @@ namespace FlashcardsProgram
             //text to display (this will be changed to images later on.
             ynButtons[0].Text = "Y";
             ynButtons[1].Text = "N";
+            buttonstuff = true;
         }
 
     void TestView_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Y)
         {
-            correctRoutine();
-            buttonstuff = false;
-            nextQuestion();
+            YRoutine();
 
         }
         else if (e.KeyCode == Keys.N)
         {
-            speechGenerator.Speak("Incorrect.", SpeechVoiceSpeakFlags.SVSFlagsAsync);
-            currentCardStack[quizCardStack[currentIndex].index].score -= 1;
-            buttonstuff = false;
-            nextQuestion();
+            NRoutine();
         }
         else if (e.KeyCode == Keys.Escape)
             this.Close();
@@ -193,17 +202,13 @@ namespace FlashcardsProgram
     void YButton_Click(object sender, EventArgs e)
         {
             //correct
-            correctRoutine();
-            
+            YRoutine();
         }
 
     void NButton_Click(object sender, EventArgs e)
         {
             //incorrect
-            speechGenerator.Speak("Incorrect.", SpeechVoiceSpeakFlags.SVSFlagsAsync);
-            currentCardStack[quizCardStack[currentIndex].index].score -= 1;
-            buttonstuff = false;
-            nextQuestion();
+            NRoutine();
             
         }
 
@@ -211,6 +216,7 @@ namespace FlashcardsProgram
     {
         userInputTB.Enabled = false; //prevent the user from inputting anything, thus changing their answer.
         antiCheatingDevice.Hide();
+        this.Refresh();
     }
     void antiCheatingMethodReveal()
     {
@@ -263,7 +269,8 @@ namespace FlashcardsProgram
     private void correctRoutine()
     {
         correct++;
-        speechGenerator.Speak("Correct!", SpeechVoiceSpeakFlags.SVSFlagsAsync);
+        speechGenerator.Speak("Correct!", SpeechVoiceSpeakFlags.SVSFParseAutodetect);
+        
         try
         {
             currentCardStack[quizCardStack[currentIndex].index].score += 1;
@@ -281,7 +288,7 @@ namespace FlashcardsProgram
 
         speechGenerator.Speak("Answer: " + answerLB.Text,SpeechVoiceSpeakFlags.SVSFlagsAsync);
 
-
+        nextQuestion();
     }
     
     private void checkingRoutine()
@@ -301,9 +308,9 @@ namespace FlashcardsProgram
             
             displayYNButtons();
             userInputTB.Enabled = false;
-
+            buttonstuff = true;
         }
-        buttonstuff = true;
+        
         checkAnswerButton.Text = "Continue";
     }
 
@@ -318,10 +325,13 @@ namespace FlashcardsProgram
 
     private void button1_Click(object sender, EventArgs e)
         {
+
+
+        //this is causing the problem of skipping reading the answer. It just goes straight to the next question.
             if (buttonstuff)
             {
-                buttonstuff = false;
-                nextQuestion();
+                //buttonstuff = false;
+                //nextQuestion();
             }
             else
             {
@@ -340,14 +350,16 @@ namespace FlashcardsProgram
         {
             if (e.KeyCode == Keys.Enter)
             {
-                if (buttonstuff)
-                {
-                    buttonstuff = false;
-                    nextQuestion();
-                }
-                
-                else
-                    checkingRoutine();
+               if (!buttonstuff) checkingRoutine();
+            }
+            else if (buttonstuff)
+            {
+                if (e.KeyCode == Keys.Y)
+                    YRoutine();
+                else if (e.KeyCode == Keys.N)
+                    NRoutine();
+
+
             }
             else if (e.KeyCode == Keys.Escape)
                 this.Close();
